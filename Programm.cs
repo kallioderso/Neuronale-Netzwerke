@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 // Netzwerk mit 2 Eingaben, 1 Hidden Layer mit 3 Neuronen, und 1 Output-Neuron
 NeuralNetwork net = new NeuralNetwork(new int[] { 4, 8, 12, 16, 16});
-double learningRate = 0.1;
+double learningRate = 0.01;
 
-for (int epoch = 0; epoch < 100000; epoch++)
+while (!CheckFunctions(net))
 {
     net.Train(new double[] { 0, 0, 0, 0 }, new double[] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, learningRate);
     net.Train(new double[] { 0, 0, 0, 1 }, new double[] { 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, learningRate);
@@ -25,27 +25,35 @@ for (int epoch = 0; epoch < 100000; epoch++)
     net.Train(new double[] { 1, 1, 1, 1 }, new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, learningRate);
 }
 
+Console.WriteLine("Werte eingeben:\n");
 while (true)
 {
+    Console.WriteLine("Werte eingeben:");
     string input = Console.ReadLine();
     string[] parts = input.Split(' ');
-    double[,] inputs = new double[parts.Length, net.Layers[0].Neurons.Count];
-    int ipart = 0;
-    foreach (string part in parts)
-    {
-        for (int j = 0; j < part.Length; j++)
-            inputs[ipart, j] = part[j] == '1' ? 1.0 : 0.0;
-        ipart++;
-    }
-    double[] result = new double[parts.Length];
-    for (int i = 0; i < parts.Length; i++) { double[] inVec = new double[net.Layers[0].Neurons.Count]; for (int j = 0; j < inVec.Length; j++) inVec[j] = inputs[i, j]; double[] outVec = net.Predict(inVec); int best = 0; for (int k = 1; k < outVec.Length; k++) if (outVec[k] > outVec[best]) best = k; result[i] = best; }
-
     int iSumme = 0;
-    for (int i = 0; i < parts.Length; i++)
-        iSumme += (int)Math.Pow((double)result[i], (double)(4 * i));
-
-    Console.WriteLine(iSumme);
+    for(int partIndex = 0; partIndex < parts.Length; partIndex++)
+    {
+        string part = parts[partIndex];
+        double[] inputs = new double[4];
+        for(int i = 0; i < Math.Min(part.Length, 4); i++)
+            inputs[i] = part[i] == '1' ? 1.0 : 0.0; 
+        
+        double[] prediction = net.Predict(inputs);
+        int digit = iNumber(prediction);
+        
+        int position = parts.Length - 1 - partIndex; // Stellenwert von rechts
+        iSumme += digit * (int)Math.Pow(16, position); // Basis 16 für 4-Bit Gruppen
+    }
+    Console.WriteLine($"Ergebnis: {iSumme}");
 }
+
+int iNumber(double[] ergebnise)
+{
+    return Array.IndexOf(ergebnise, ergebnise.Max());
+}
+
+bool CheckFunctions(NeuralNetwork net) =>  ((iNumber(net.Predict(new double[] { 0, 0, 0, 0 })) == 0) && (iNumber(net.Predict(new double[] { 0, 0, 0, 1 })) == 1) && (iNumber(net.Predict(new double[] { 0, 0, 1, 0 })) == 2) && (iNumber(net.Predict(new double[] { 0, 0, 1, 1 })) == 3) && (iNumber(net.Predict(new double[] { 0, 1, 0, 0 })) == 4) && (iNumber(net.Predict(new double[] { 0, 1, 0, 1 })) == 5) && (iNumber(net.Predict(new double[] { 0, 1, 1, 0 })) == 6) && (iNumber(net.Predict(new double[] { 0, 1, 1, 1 })) == 7) && (iNumber(net.Predict(new double[] { 1, 0, 0, 0 })) == 8) && (iNumber(net.Predict(new double[] { 1, 0, 0, 1 })) == 9) && (iNumber(net.Predict(new double[] { 1, 0, 1, 0 })) == 10) && (iNumber(net.Predict(new double[] { 1, 0, 1, 1 })) == 11) && (iNumber(net.Predict(new double[] { 1, 1, 0, 0 })) == 12) && (iNumber(net.Predict(new double[] { 1, 1, 0, 1 })) == 13) && (iNumber(net.Predict(new double[] { 1, 1, 1, 0 })) == 14) && (iNumber(net.Predict(new double[] { 1, 1, 1, 1 })) == 15));
 
 public class Neuron
 {
